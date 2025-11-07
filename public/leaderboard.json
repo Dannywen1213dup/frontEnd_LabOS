@@ -1,0 +1,38 @@
+[
+  {
+    "rank": 1,
+    "model": "LabOS VLM-235B",
+    "team": "Stanford–Princeton",
+    "score": 4.21,
+    "date": "2025-10-29"
+  },
+  {
+    "rank": 2,
+    "model": "Gemini 2.5 Pro",
+    "team": "Google DeepMind",
+    "score": 2.86,
+    "date": "2025-10-25"
+  },
+  {
+    "rank": 3,
+    "model": "GPT-4o",
+    "team": "OpenAI",
+    "score": 2.02,
+    "date": "2025-10-24"
+  },
+  {
+    "rank": 4,
+    "model": "Claude 3.5 Sonnet",
+    "team": "Anthropic",
+    "score": 1.95,
+    "date": "2025-10-23"
+  },
+  {
+    "rank": 5,
+    "model": "Cosmos Vision",
+    "team": "NVIDIA",
+    "score": 1.78,
+    "date": "2025-10-22"
+  }
+]
+

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LabOS – AI-XR Co-Scientist</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f9ff;
+    --surface:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --primary:#4f46e5;
+    --accent:#22d3ee;
+    --grad:linear-gradient(90deg,#8b5cf6 0%,#22d3ee 100%);
+    --max:1160px;
+    --radius:12px;
+    --shadow:0 8px 28px rgba(16,24,40,.08);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:var(--bg)}
+
+  /* Header / Nav */
+  header{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid #e5e7eb}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+  .nav{height:64px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+  .brand img{height:28px;width:auto}
+  .nav a{color:#475569;text-decoration:none;margin-left:22px;font-weight:600}
+  .nav a:hover{color:#111827}
+  .cta-pill{padding:8px 14px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+
+  /* Hero */
+  .hero{position:relative;background:#0b1220;color:#fff;text-align:center}
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.25),rgba(2,6,23,.35))}
+  .hero-inner{position:relative;z-index:1;padding:96px 20px 72px}
+  .hero h1{margin:0 0 10px;font-size:44px;line-height:1.1;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{margin:0 auto 22px;max-width:720px;font-size:18px;color:#e5e7eb}
+  .btn{display:inline-block;background:var(--grad);color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;box-shadow:var(--shadow)}
+  .btn.alt{background:#fff;color:#111827;border:1px solid #e5e7eb}
+
+  /* Sections */
+  section{padding:72px 0}
+  .section{max-width:var(--max);margin:0 auto;padding:0 20px}
+  h2{font-size:34px;margin:0 0 18px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  p.lead{font-size:18px;color:var(--muted);margin-top:-6px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+  @media (max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid #eef2ff;border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+
+  /* Use LabOS Now cards */
+  .use-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  @media (max-width:1000px){.use-cards{grid-template-columns:1fr}}
+  .use-card h3{margin:8px 0 6px}
+  .use-card p{color:var(--muted);margin:0 0 14px}
+
+  /* Partners strip (logos) */
+  .logo-row{display:flex;flex-wrap:wrap;gap:32px;align-items:center}
+  .logo-row img{height:40px;filter:grayscale(1);opacity:.9}
+
+  /* Leaderboard */
+  .tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .search{padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;min-width:260px;background:#fff}
+  .table-wrap{overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+  table{width:100%;border-collapse:collapse;min-width:640px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #f1f5f9}
+  th{background:#f8fafc;font-weight:700;color:#111827;position:sticky;top:0;cursor:pointer;user-select:none}
+  th.sort-asc::after{content:" ↑";color:#94a3b8}
+  th.sort-desc::after{content:" ↓";color:#94a3b8}
+  tbody tr:nth-child(even){background:#fafafa}
+
+  /* Footer */
+  footer{background:#0b1220;color:#cbd5e1}
+  .foot{display:grid;grid-template-columns:2fr 1fr 1fr;gap:28px}
+  .foot h4{color:#fff;margin:0 0 8px}
+  .foot a{color:#cbd5e1;text-decoration:none;display:block;margin:6px 0}
+  .foot a:hover{color:#fff}
+  .copy{border-top:1px solid rgba(148,163,184,.2);margin-top:24px;padding-top:14px;text-align:center;font-size:14px}
+
+  /* Simple reveal on scroll */
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s ease, transform .5s ease}
+  .reveal.on{opacity:1;transform:none}
+
+  /* Media grid (figures) & Video grid */
+  .media-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  .video-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  @media (max-width:900px){.media-grid,.video-grid{grid-template-columns:1fr}}
+  figure{margin:0}
+  figure img, .video{width:100%;border-radius:12px;box-shadow:var(--shadow);border:1px solid #e5e7eb}
+  .caption{margin-top:8px;color:var(--muted);font-size:14px}
+  .video{aspect-ratio:16/9;background:#000;display:block}
+
+  /* Google Form embed fix */
+  #signup-form iframe{width:100%;min-height:960px;border:0;border-radius:10px;background:#fff}
+  @media (max-width:900px){#signup-form iframe{min-height:1280px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">
+      <img src="labOS_logo.png" alt="LabOS logo" />
+      <span>LabOS</span>
+    </div>
+    <nav>
+      <a href="#about">About</a>
+      <a href="#use">Use LabOS Now</a>
+      <a href="#media">Media</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#leaderboard">Leaderboard</a>
+      <a href="#team">Team</a>
+      <a class="cta-pill" href="https://arxiv.org/abs/2510.14861" target="_blank" rel="noopener">Paper</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1>LabOS: The AI-XR Co-Scientist</h1>
+    <p>Agentic AI that sees, reasons, and works with humans in real laboratories — linking dry-lab planning to wet-lab execution.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a class="btn" href="#use">Use LabOS Now</a>
+      <a class="btn alt" href="#benchmark">Explore LSV Benchmark</a>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section reveal">
+    <h2>About LabOS</h2>
+    <p class="lead">A self-evolving, multi-agent system paired with XR smart-glasses and a lab-specialized VLM to co-pilot experiments with human scientists.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>See</h3>
+        <p>AR/XR smart‑glasses with real‑time multimodal sensing capture egocentric lab workflows. A lab‑specialized VLM, post‑trained on public and in‑house experimental videos and the LSV corpus, aligns live actions to reference protocols, detects deviations, verifies outcomes, and supports 3D/4D spatial “digital twins” for grounded scene understanding.</p>
+        <h3>Reason</h3>
+        <p>A self‑evolving multi‑agent core—Manager/Planner, Developer (coding & execution), Critic (evaluation & refinement)—with a Tool‑Creation module that auto‑expands a shared Tool Ocean for new analyses. Demonstrates state‑of‑the‑art performance on HLE: Biomedicine and LAB‑Bench (DBQA/LitQA).</p>
+        <h3>Act</h3>
+        <p>Streams protocol steps to XR for hands‑free, step‑by‑step guidance with error‑detection/correction cues and voice/gesture interaction. Records materials and steps for automated documentation, closing the loop from design to wet‑lab validation.</p>
+      </div>
+      <div class="card">
+        <img src="labOS_f1.png" alt="Figure 1: LabOS overview with agentic dry-lab and XR wet-lab modules" style="width:100%;border-radius:10px">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USE LABOS NOW -->
+<section id="use">
+  <div class="section reveal">
+    <h2>Use LabOS Now</h2>
+    <p class="lead">Jump in: read the paper, browse code (when available), or sign up your lab to pilot LabOS.</p>
+
+    <div class="use-cards">
+      <!-- Paper -->
+      <div class="card use-card">
+        <h3>📄 LabOS Paper</h3>
+        <p>Full description of the agentic AI-XR platform, the LabSuperVision benchmark, and biomedical studies.</p>
+        <a class="btn" href="https://arxiv.org/abs/2510.14861" target="_blank" rel="noopener">Read on arXiv</a>
+      </div>
+
+      <!-- Code -->
+      <div class="card use-card">
+        <h3>💾 LabOS Code</h3>
+        <p>Open-source components and examples. (Placeholder link — update with your repo.)</p>
+        <a class="btn" href="https://github.com/labos-ai" target="_blank" rel="noopener">GitHub Repository</a>
+      </div>
+
+      <!-- Signup -->
+      <div class="card use-card">
+        <h3>🧪 Sign Up to Test</h3>
+        <p>Partner with us to deploy LabOS in your lab. Early access for research collaborators.</p>
+        <a class="btn" href="#signup-form">Go to Sign-up</a>
+      </div>
+    </div>
+
+    <!-- Embedded Form -->
+    <div id="signup-form" class="card" style="margin-top:22px">
+      <h3 style="margin:0 0 8px">Sign-up Form</h3>
+      <p class="lead" style="margin:0 0 14px">Tell us about your lab and use-case. We’ll follow up with access details.</p>
+      <iframe class="gform" loading="lazy" src="https://docs.google.com/forms/d/e/1FAIpQLSflA2r0EAaXEnRnsdQfJwKDBRheN37KNDk0xGlD49tISg9ZYQ/viewform?embedded=true" title="LabOS Sign-up">Loading…</iframe>
+      <div style="margin-top:10px;font-size:14px;color:var(--muted)">Having trouble? <a href="https://docs.google.com/forms/d/e/1FAIpQLSflA2r0EAaXEnRnsdQfJwKDBRheN37KNDk0xGlD49tISg9ZYQ/viewform" target="_blank" rel="noopener" style="font-weight:600">Open the form in a new tab ↗</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- MEDIA (Figures & Videos) -->
+<section id="media">
+  <div class="section reveal">
+    <h2>Media</h2>
+    <p class="lead">Key figures and short demo clips from the paper to make LabOS more intuitive at a glance.</p>
+
+    <div class="media-grid" style="margin-bottom:22px">
+      <figure class="card">
+        <img src="labOS_f1.png" alt="Figure 1: LabOS overview with agentic dry-lab and XR wet-lab modules">
+        <figcaption class="caption">Fig. 1 — LabOS overview: multi‑agent dry‑lab (planning, development, critic, tool‑creation) and XR‑mediated wet‑lab collaboration.</figcaption>
+      </figure>
+      <figure class="card">
+        <img src="labOS_f2.png" alt="Figure 2: LSV benchmark and LabOS‑VLM results">
+        <figcaption class="caption">Fig. 2 — LabSuperVision (LSV) benchmark & LabOS‑VLM family performance on protocol alignment and error detection.</figcaption>
+      </figure>
+      <figure class="card">
+        <img src="labOS_f3.png" alt="Figure 3: XR streaming and 3D/4D reconstruction for live guidance">
+        <figcaption class="caption">Fig. 3 — XR streaming, live guidance, deviation prompts, and 3D/4D reconstruction (Gaussian splatting) for spatial grounding.</figcaption>
+      </figure>
+      <figure class="card">
+        <img src="labOS_f4.png" alt="Figure 4: Applications across NK target discovery, cell fusion mechanism, and stem cell engineering">
+        <figcaption class="caption">Fig. 4 — Applications: NK immunotherapy target discovery (CEACAM6), cell‑fusion regulator (ITSN1), and iPSC experiments copiloted by LabOS.</figcaption>
+      </figure>
+    </div>
+
+    <div class="video-grid">
+      <video class="video card" controls preload="metadata" poster="labOS_f3.png">
+        <source src="labos_xr_demo.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <video class="video card" controls preload="metadata" poster="labOS_f2.png">
+        <source src="labos_vlm_benchmark.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <p class="lead" style="margin-top:14px;font-size:14px">Place video files next to this HTML (optional). If not present, posters still show the layout.</p>
+  </div>
+</section>
+
+<!-- BENCHMARK -->
+<section id="benchmark">
+  <div class="section reveal">
+    <h2>LSV Benchmark</h2>
+    <p class="lead">200+ expert-annotated egocentric lab videos with gold-standard protocols for protocol alignment and issue detection.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Evaluate Your Model</h3>
+        <p>We evaluate leading VLMs/agents (e.g., GPT-4o, Gemini 2.5, Cosmos) and support community submissions.</p>
+        <a class="btn" href="mailto:congle@stanford.edu">Submit Model / Data</a>
+      </div>
+      <div class="card">
+        <img src="labOS_f2.png" alt="LSV Benchmark illustration" style="width:100%;border-radius:10px">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="leaderboard">
+  <div class="section reveal">
+    <h2>Leaderboard</h2>
+    <p class="lead">Latest evaluations on LSV. Click headers to sort; search by model or team.</p>
+
+    <div class="tools">
+      <input class="search" id="searchInput" type="search" placeholder="Search model or team…" aria-label="Search leaderboard">
+    </div>
+
+    <div class="table-wrap">
+      <table id="leaderboardTable" aria-describedby="Leaderboard of models on LSV">
+        <thead>
+          <tr>
+            <th data-key="rank">Rank</th>
+            <th data-key="model">Model</th>
+            <th data-key="team">Team</th>
+            <th data-key="score">Score</th>
+            <th data-key="date">Date</th>
+          </tr>
+        </thead>
+        <tbody><!-- populated by JS --></tbody>
+      </table>
+    </div>
+    <p class="lead" style="font-size:14px;margin-top:8px">Scores follow a 0–5 human‑expert rubric for protocol alignment and issue identification, per the paper.</p>
+  </div>
+</section>
+
+<!-- TEAM & FOUNDING PARTNERS -->
+<section id="team">
+  <div class="section reveal">
+    <h2>Team & Founding Partners</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Core Authors</h3>
+        <p><strong>Le Cong</strong> (Stanford) &nbsp;•&nbsp; <strong>Mengdi Wang</strong> (Princeton)</p>
+        <p>Co-first/core contributors include: Zaixi Zhang, Xiaotong Wang, Yin Di, Ruofan Jin, Michal Gerasimiuk, Yinkai Wang, Ravi K. Dinesh, David Smerkous, Alex Smerkous, Xuekun Wu, Shilong Liu, Peishan Li, Yi Zhu, Simran Serrao, Ning Zhao, Imran A. Mohammad, John B. Sunwoo, Joseph C. Wu.</p>
+        <details>
+          <summary style="cursor:pointer">View full author listing & affiliations</summary>
+          <div style="margin-top:8px;color:var(--muted);font-size:15px;line-height:1.6">
+            Le Cong¹²*, Zaixi Zhang³*, Xiaotong Wang¹²*, Yin Di¹²*, Ruofan Jin³, Michal Gerasimiuk¹², Yinkai Wang¹², Ravi K. Dinesh¹², David Smerkous⁴, Alex Smerkous⁵, Xuekun Wu²⁶, Shilong Liu³, Peishan Li¹², Yi Zhu¹², Simran Serrao¹², Ning Zhao¹², Imran A. Mohammad²⁷, John B. Sunwoo²⁷, Joseph C. Wu²⁶, Mengdi Wang³**.
+            <br><em>(See paper for full institutional details.)</em>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Founding Partners</h3>
+        <div class="logo-row" style="margin-bottom:12px">
+          <img src="logo-nvidia.png" alt="NVIDIA logo">
+          <img src="logo-nebius.png" alt="Nebius logo">
+          <img src="logo-ai4science-catalyst.png" alt="AI4Science Catalyst Institute logo">
+        </div>
+        <p class="lead" style="margin:0">We acknowledge the support of NVIDIA, Nebius, and AI4Science Catalyst Institute for VLM fine-tuning, agentic integration, infrastructure, and hardware.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Institutional Affiliations</h3>
+      <div class="logo-row">
+        <img src="logo-stanford.png" alt="Stanford University">
+        <img src="logo-princeton.png" alt="Princeton University">
+        <img src="logo-ohio-state.png" alt="The Ohio State University">
+        <img src="logo-uw.png" alt="University of Washington">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="section foot">
+    <div>
+      <h4>LabOS</h4>
+      <p>AI-XR co-scientist for modern labs — from reasoning to real-world execution and documentation.</p>
+    </div>
+    <div>
+      <h4>Quick Links</h4>
+      <a href="#about">About</a>
+      <a href="#use">Use LabOS Now</a>
+      <a href="#media">Media</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#leaderboard">Leaderboard</a>
+      <a href="#team">Team</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="mailto:congle@stanford.edu">congle@stanford.edu</a>
+      <a href="mailto:mengdiw@princeton.edu">mengdiw@princeton.edu</a>
+    </div>
+  </div>
+  <div class="section copy">&copy; 2025 LabOS Project. All rights reserved.</div>
+</footer>
+
+<script>
+/* -------- reveal on scroll -------- */
+(function(){
+  const els=[...document.querySelectorAll('.reveal')];
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});
+  },{threshold:.12});
+  els.forEach(el=>io.observe(el));
+})();
+
+/* -------- leaderboard data + UI -------- */
+(function(){
+  const fallback = [
+    { rank:1, model:"LabOS VLM-235B", team:"Stanford–Princeton", score:4.21, date:"2025-10-29" },
+    { rank:2, model:"Gemini 2.5 Pro", team:"Google DeepMind",     score:2.86, date:"2025-10-25" },
+    { rank:3, model:"GPT-4o",         team:"OpenAI",              score:2.02, date:"2025-10-24" }
+  ];
+  const tbody   = document.querySelector("#leaderboardTable tbody");
+  const headths = [...document.querySelectorAll("#leaderboardTable thead th")];
+  const search  = document.getElementById("searchInput");
+
+  let data = [];
+  let sortKey = "rank";
+  let sortDir = "asc";
+
+  function tryFetch(){
+    return fetch("leaderboard.json",{cache:"no-store"})
+      .then(r=> r.ok ? r.json() : Promise.reject())
+      .catch(() => fallback);
+  }
+
+  function render(){
+    const sorted = [...data].sort((a,b)=>{
+      const k = sortKey;
+      let A=a[k], B=b[k];
+      if(k==="score"){A=+A;B=+B;}
+      if(k==="rank"){A=+A;B=+B;}
+      if(k==="date"){A=new Date(A);B=new Date(B);}
+      if(typeof A==="string"){A=A.toLowerCase();B=B.toLowerCase();}
+      if(A<B) return sortDir==="asc"?-1:1;
+      if(A>B) return sortDir==="asc"? 1:-1;
+      return 0;
+    });
+
+    const q = (search.value||"").toLowerCase();
+    const filtered = sorted.filter(r => (`${r.model} ${r.team}`).toLowerCase().includes(q));
+
+    tbody.innerHTML = "";
+    filtered.forEach(r=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.rank}</td>
+        <td>${r.model}</td>
+        <td>${r.team}</td>
+        <td>${typeof r.score==="number" ? r.score.toFixed(2) : r.score}</td>
+        <td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    headths.forEach(th=>th.classList.remove("sort-asc","sort-desc"));
+    const active = headths.find(th=>th.dataset.key===sortKey);
+    if(active) active.classList.add(sortDir==="asc"?"sort-asc":"sort-desc");
+  }
+
+  headths.forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key = th.dataset.key;
+      if(sortKey===key){ sortDir = sortDir==="asc"?"desc":"asc"; }
+      else { sortKey = key; sortDir = "asc"; }
+      render();
+    });
+  });
+
+  search.addEventListener("input", render);
+  tryFetch().then(res => { data = res; render(); });
+})();
+</script>
+</body>
+</html>
