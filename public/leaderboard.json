@@ -4,35 +4,70 @@
     "model": "LabOS VLM-235B",
     "team": "Stanford–Princeton",
     "score": 4.21,
-    "date": "2025-10-29"
+    "date": "2025-10-29",
+    "paper": "https://arxiv.org/abs/2025.xxxxx",
+    "github": "https://github.com/stanford-princeton/labos",
+    "parameters": "235B",
+    "evaluationDetails": {
+      "protocolAlignment": 4.5,
+      "issueIdentification": 3.9
+    }
   },
   {
     "rank": 2,
     "model": "Gemini 2.5 Pro",
     "team": "Google DeepMind",
     "score": 2.86,
-    "date": "2025-10-25"
+    "date": "2025-10-25",
+    "paper": "https://deepmind.google/technologies/gemini/",
+    "github": null,
+    "parameters": "Unknown",
+    "evaluationDetails": {
+      "protocolAlignment": 3.1,
+      "issueIdentification": 2.6
+    }
   },
   {
     "rank": 3,
     "model": "GPT-4o",
     "team": "OpenAI",
     "score": 2.02,
-    "date": "2025-10-24"
+    "date": "2025-10-24",
+    "paper": "https://openai.com/research/gpt-4",
+    "github": null,
+    "parameters": "Unknown",
+    "evaluationDetails": {
+      "protocolAlignment": 2.3,
+      "issueIdentification": 1.7
+    }
   },
   {
     "rank": 4,
     "model": "Claude 3.5 Sonnet",
     "team": "Anthropic",
     "score": 1.95,
-    "date": "2025-10-23"
+    "date": "2025-10-23",
+    "paper": "https://www.anthropic.com/research/claude-3-5-sonnet",
+    "github": null,
+    "parameters": "Unknown",
+    "evaluationDetails": {
+      "protocolAlignment": 2.1,
+      "issueIdentification": 1.8
+    }
   },
   {
     "rank": 5,
     "model": "Cosmos Vision",
     "team": "NVIDIA",
     "score": 1.78,
-    "date": "2025-10-22"
+    "date": "2025-10-22",
+    "paper": "https://www.nvidia.com/en-us/research/",
+    "github": null,
+    "parameters": "Unknown",
+    "evaluationDetails": {
+      "protocolAlignment": 1.9,
+      "issueIdentification": 1.6
+    }
   }
 ]
 

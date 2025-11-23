@@ -23,13 +23,14 @@
         </div>
       </div>
       <p class="section-lead">
-        Latest evaluations on LSV. Click headers to sort; search by model or team.
+        <span v-if="activeBoard === 'llm'">Latest evaluations on LSV. Click headers to sort; search by model or team.</span>
+        <span v-else>Data contributors to the LabOS benchmark. Click headers to sort; search by institution or labs.</span>
       </p>
 
       <div class="tools">
         <a-input-search
           v-model:value="searchQuery"
-          placeholder="Search model or team…"
+          :placeholder="activeBoard === 'llm' ? 'Search model or team…' : 'Search institution or labs…'"
           class="search-input"
           @search="handleSearch"
         />
@@ -41,12 +42,38 @@
           :columns="activeBoard === 'llm' ? columnsLlm : columnsContrib"
           :data-source="activeBoard === 'llm' ? filteredLlmData : filteredContributorData"
           :pagination="false"
-          :scroll="{ x: 640 }"
+          :scroll="{ x: activeBoard === 'llm' ? 1200 : 1400 }"
           @change="handleTableChange"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'score' && typeof record.score === 'number'">
               <span class="score-value">{{ record.score.toFixed(2) }}</span>
+            </template>
+            <template v-else-if="column.key === 'paper' && record.paper">
+              <a :href="record.paper" target="_blank" rel="noopener noreferrer" class="link-cell">
+                📄 Paper
+              </a>
+            </template>
+            <template v-else-if="column.key === 'github' && record.github">
+              <a :href="record.github" target="_blank" rel="noopener noreferrer" class="link-cell">
+                🔗 Code
+              </a>
+            </template>
+            <template v-else-if="column.key === 'evaluationDetails' && record.evaluationDetails">
+              <div class="eval-details">
+                <div>Protocol: {{ record.evaluationDetails.protocolAlignment?.toFixed(1) || 'N/A' }}</div>
+                <div>Issues: {{ record.evaluationDetails.issueIdentification?.toFixed(1) || 'N/A' }}</div>
+              </div>
+            </template>
+            <template v-else-if="column.key === 'website' && record.website">
+              <a :href="record.website" target="_blank" rel="noopener noreferrer" class="link-cell">
+                🌐 Website
+              </a>
+            </template>
+            <template v-else-if="column.key === 'contact' && record.contact">
+              <a :href="`mailto:${record.contact}`" class="link-cell">
+                ✉️ {{ record.contact }}
+              </a>
             </template>
           </template>
         </a-table>
@@ -72,13 +99,34 @@ interface LeaderboardEntry {
   team: string
   score: number
   date: string
+  paper?: string | null
+  github?: string | null
+  parameters?: string
+  evaluationDetails?: {
+    protocolAlignment?: number
+    issueIdentification?: number
+  }
+}
+
+interface ContributorEntry {
+  key: string
+  rank: number
+  institution: string
+  labs: string[]
+  labCount: number
+  protocolsCount?: number
+  datasetsCount?: number
+  contact?: string
+  contributionDate?: string
+  website?: string
+  location?: string
 }
 
 type ActiveBoard = 'llm' | 'contributors'
 
 const searchQuery = ref('')
 const leaderboardData = ref<LeaderboardEntry[]>([])
-const contributorData = ref<Array<{ key: string; rank: number; institution: string; labs: string[] }>>([])
+const contributorData = ref<ContributorEntry[]>([])
 const sortKey = ref<string>('rank')
 const sortOrder = ref<'ascend' | 'descend'>('ascend')
 const activeBoard = ref<ActiveBoard>('llm')
@@ -98,26 +146,58 @@ const columnsLlm = computed<TableProps['columns']>(() => [
     dataIndex: 'rank',
     key: 'rank',
     sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.rank - b.rank,
-    width: 100
+    width: 80,
+    fixed: 'left' as const
   },
   {
     title: 'Model',
     dataIndex: 'model',
     key: 'model',
-    sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.model.localeCompare(b.model)
+    sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.model.localeCompare(b.model),
+    width: 180
   },
   {
     title: 'Team',
     dataIndex: 'team',
     key: 'team',
-    sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.team.localeCompare(b.team)
+    sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.team.localeCompare(b.team),
+    width: 160
   },
   {
     title: 'Score',
     dataIndex: 'score',
     key: 'score',
     sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.score - b.score,
+    width: 100
+  },
+  {
+    title: 'Parameters',
+    dataIndex: 'parameters',
+    key: 'parameters',
+    sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => {
+      const aVal = a.parameters || 'Unknown'
+      const bVal = b.parameters || 'Unknown'
+      return aVal.localeCompare(bVal)
+    },
     width: 120
+  },
+  {
+    title: 'Evaluation Details',
+    dataIndex: 'evaluationDetails',
+    key: 'evaluationDetails',
+    width: 160
+  },
+  {
+    title: 'Paper',
+    dataIndex: 'paper',
+    key: 'paper',
+    width: 100
+  },
+  {
+    title: 'Code',
+    dataIndex: 'github',
+    key: 'github',
+    width: 100
   },
   {
     title: 'Date',
@@ -125,7 +205,7 @@ const columnsLlm = computed<TableProps['columns']>(() => [
     key: 'date',
     sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => 
       new Date(a.date).getTime() - new Date(b.date).getTime(),
-    width: 140
+    width: 120
   }
 ])
 
@@ -134,28 +214,72 @@ const columnsContrib = computed<TableProps['columns']>(() => [
     title: 'Rank',
     dataIndex: 'rank',
     key: 'rank',
-    sorter: (a: any, b: any) => a.rank - b.rank,
-    width: 100
+    sorter: (a: ContributorEntry, b: ContributorEntry) => a.rank - b.rank,
+    width: 80,
+    fixed: 'left' as const
   },
   {
     title: 'Institution',
     dataIndex: 'institution',
     key: 'institution',
-    sorter: (a: any, b: any) => a.institution.localeCompare(b.institution)
+    sorter: (a: ContributorEntry, b: ContributorEntry) => a.institution.localeCompare(b.institution),
+    width: 180
+  },
+  {
+    title: 'Location',
+    dataIndex: 'location',
+    key: 'location',
+    sorter: (a: ContributorEntry, b: ContributorEntry) => (a.location || '').localeCompare(b.location || ''),
+    width: 160
   },
   {
     title: 'Labs',
     dataIndex: 'labs',
     key: 'labs',
     customRender: ({ text }: any) => Array.isArray(text) ? text.join(', ') : text,
-    sorter: (a: any, b: any) => (a.labs?.length || 0) - (b.labs?.length || 0)
+    sorter: (a: ContributorEntry, b: ContributorEntry) => (a.labs?.length || 0) - (b.labs?.length || 0),
+    width: 200
   },
   {
     title: 'Lab Count',
     dataIndex: 'labCount',
     key: 'labCount',
-    sorter: (a: any, b: any) => a.labCount - b.labCount,
+    sorter: (a: ContributorEntry, b: ContributorEntry) => a.labCount - b.labCount,
+    width: 100
+  },
+  {
+    title: 'Protocols',
+    dataIndex: 'protocolsCount',
+    key: 'protocolsCount',
+    sorter: (a: ContributorEntry, b: ContributorEntry) => (a.protocolsCount || 0) - (b.protocolsCount || 0),
+    width: 100
+  },
+  {
+    title: 'Datasets',
+    dataIndex: 'datasetsCount',
+    key: 'datasetsCount',
+    sorter: (a: ContributorEntry, b: ContributorEntry) => (a.datasetsCount || 0) - (b.datasetsCount || 0),
+    width: 100
+  },
+  {
+    title: 'Contribution Date',
+    dataIndex: 'contributionDate',
+    key: 'contributionDate',
+    sorter: (a: ContributorEntry, b: ContributorEntry) => 
+      new Date(a.contributionDate || '').getTime() - new Date(b.contributionDate || '').getTime(),
     width: 140
+  },
+  {
+    title: 'Contact',
+    dataIndex: 'contact',
+    key: 'contact',
+    width: 180
+  },
+  {
+    title: 'Website',
+    dataIndex: 'website',
+    key: 'website',
+    width: 100
   }
 ])
 
@@ -231,21 +355,43 @@ const loadLeaderboardData = async () => {
   }
 }
 
-const loadContributorData = () => {
-  // Static data provided by user
-  const source = [
-    { institution: 'Stanford', labs: ['CongLab', 'WuLab', 'SLab'] },
-    { institution: 'Princeton', labs: ['WangLab', 'WuLab', 'DLab'] },
-    { institution: 'Oregan State University', labs: ['LLab'] },
-    { institution: 'University Washington', labs: ['SLab'] }
-  ]
-  contributorData.value = source.map((item, index) => ({
-    key: `${index}`,
-    rank: index + 1,
-    institution: item.institution,
-    labs: item.labs,
-    labCount: item.labs.length
-  }))
+const loadContributorData = async () => {
+  try {
+    const response = await fetch('/contributors.json', { cache: 'no-store' })
+    const data = await response.json()
+    // Sort by total contributions (protocols + datasets) descending, then by lab count
+    const sorted = data
+      .map((item: any) => ({
+        ...item,
+        totalContributions: (item.protocolsCount || 0) + (item.datasetsCount || 0)
+      }))
+      .sort((a: any, b: any) => {
+        if (b.totalContributions !== a.totalContributions) {
+          return b.totalContributions - a.totalContributions
+        }
+        return b.labCount - a.labCount
+      })
+    contributorData.value = sorted.map((item: any, index: number) => ({
+      key: `${index}`,
+      rank: index + 1,
+      ...item
+    }))
+  } catch (error) {
+    // Fallback to static data
+    const source = [
+      { institution: 'Stanford', labs: ['CongLab', 'WuLab', 'SLab'] },
+      { institution: 'Princeton', labs: ['WangLab', 'WuLab', 'DLab'] },
+      { institution: 'Oregon State University', labs: ['LLab'] },
+      { institution: 'University of Washington', labs: ['SLab'] }
+    ]
+    contributorData.value = source.map((item, index) => ({
+      key: `${index}`,
+      rank: index + 1,
+      institution: item.institution,
+      labs: item.labs,
+      labCount: item.labs.length
+    }))
+  }
 }
 
 onMounted(() => {
@@ -391,6 +537,28 @@ onMounted(() => {
 .score-value {
   font-weight: 600;
   color: #4f46e5;
+}
+
+.link-cell {
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.link-cell:hover {
+  color: #6366f1;
+  text-decoration: underline;
+}
+
+.eval-details {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.eval-details div {
+  margin: 2px 0;
 }
 
 .note-text {
