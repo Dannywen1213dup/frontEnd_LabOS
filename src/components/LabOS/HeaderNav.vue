@@ -20,16 +20,63 @@
         >
           Paper ↗
         </a>
+        <div class="auth-section">
+          <a-button
+            v-if="!isLoggedIn"
+            type="primary"
+            size="small"
+            class="login-btn"
+            @click="showLoginModal = true"
+          >
+            Login
+          </a-button>
+          <div v-else class="user-section">
+            <span class="user-name">{{ currentUser?.userName || 'User' }}</span>
+            <a-button
+              type="text"
+              size="small"
+              class="logout-btn"
+              @click="handleLogout"
+            >
+              Sign Out
+            </a-button>
+          </div>
+        </div>
       </nav>
+      <LoginModal :open="showLoginModal" @update:open="showLoginModal = $event" @success="handleLoginSuccess" />
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { message } from 'ant-design-vue'
 import logoSrc from '@/assets/picture/LabOS_logo.jpg'
 import { useSmoothScroll } from '@/composables/useSmoothScroll'
+import { useAuth } from '@/composables/useAuth'
+import LoginModal from './LoginModal.vue'
 
 const { scrollToId } = useSmoothScroll()
+const { isLoggedIn, currentUser, logout, checkLoginStatus } = useAuth()
+const showLoginModal = ref(false)
+
+const handleLoginSuccess = () => {
+  checkLoginStatus()
+}
+
+const handleLogout = async () => {
+  try {
+    await logout()
+    message.success('Logged out successfully')
+    checkLoginStatus()
+  } catch (error: any) {
+    message.error(error?.message || 'Failed to logout')
+  }
+}
+
+onMounted(() => {
+  checkLoginStatus()
+})
 </script>
 
 <style scoped>
@@ -106,6 +153,39 @@ const { scrollToId } = useSmoothScroll()
 .paper-link:hover {
   background: #eef2ff;
   color: #4338ca; /* 悬停时深紫色 */
+}
+
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.login-btn {
+  font-weight: 600;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-name {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.logout-btn {
+  color: #475569;
+  font-weight: 500;
+  padding: 0 8px;
+}
+
+.logout-btn:hover {
+  color: #111827;
 }
 
 @media (max-width: 768px) {
