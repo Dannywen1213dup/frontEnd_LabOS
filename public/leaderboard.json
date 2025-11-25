@@ -3,14 +3,14 @@
     "rank": 1,
     "model": "LabOS VLM-235B",
     "team": "Stanford–Princeton",
-    "score": 4.21,
+    "score": 4.11,
     "date": "2025-10-29",
     "paper": "https://arxiv.org/abs/2025.xxxxx",
     "github": "https://github.com/stanford-princeton/labos",
     "parameters": "235B",
     "evaluationDetails": {
-      "protocolAlignment": 4.5,
-      "issueIdentification": 3.9
+      "protocolAlignment": 4.21,
+      "issueIdentification": 4.0
     }
   },
   {
