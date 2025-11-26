@@ -1,0 +1,62 @@
+[
+  {
+    "institution": "Stanford",
+    "labs": [
+      "CongLab",
+      "WuLab",
+      "SLab"
+    ],
+    "protocolsCount": 45,
+    "datasetsCount": 12,
+    "contact": "contact@stanford.edu",
+    "contributionDate": "2024-01-15",
+    "website": "https://stanford.edu",
+    "location": "Stanford, CA, USA",
+    "labCount": 3,
+    "rank": 1
+  },
+  {
+    "institution": "Princeton",
+    "labs": [
+      "WangLab",
+      "WuLab",
+      "DLab"
+    ],
+    "protocolsCount": 38,
+    "datasetsCount": 10,
+    "contact": "contact@princeton.edu",
+    "contributionDate": "2024-02-20",
+    "website": "https://princeton.edu",
+    "location": "Princeton, NJ, USA",
+    "labCount": 3,
+    "rank": 2
+  },
+  {
+    "institution": "University of Washington",
+    "labs": [
+      "SLab"
+    ],
+    "protocolsCount": 22,
+    "datasetsCount": 7,
+    "contact": "contact@uw.edu",
+    "contributionDate": "2024-04-05",
+    "website": "https://washington.edu",
+    "location": "Seattle, WA, USA",
+    "labCount": 1,
+    "rank": 3
+  },
+  {
+    "institution": "Oregon State University",
+    "labs": [
+      "LLab"
+    ],
+    "protocolsCount": 15,
+    "datasetsCount": 5,
+    "contact": "contact@oregonstate.edu",
+    "contributionDate": "2024-03-10",
+    "website": "https://oregonstate.edu",
+    "location": "Corvallis, OR, USA",
+    "labCount": 1,
+    "rank": 4
+  }
+]
