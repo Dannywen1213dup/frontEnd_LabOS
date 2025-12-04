@@ -66,6 +66,7 @@
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
+import { API_BASE_URL } from '@/composables/useApiConfig'
 
 type UploadFileItem = {
   uid: string
@@ -79,10 +80,6 @@ type UploadFileItem = {
 const fileList = ref<UploadFileItem[]>([])
 const submitting = ref(false)
 const uploading = ref(false)
-
-// API base URL - includes /api context path from backend
-// You can set this via environment variable VITE_API_BASE_URL or modify directly
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8101/api'
 
 const allUploadsComplete = computed(() => {
   return fileList.value.length > 0 && 

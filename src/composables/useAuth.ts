@@ -1,7 +1,5 @@
 import { ref, computed } from 'vue'
-
-// API base URL - includes /api context path from backend
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8101/api'
+import { API_BASE_URL } from './useApiConfig'
 
 export interface LoginUser {
   id: number
@@ -28,20 +26,20 @@ export const useAuth = () => {
   const getUser = () => currentUser.value
 
   /**
-   * Login with username and password
+   * Login with email and password
    */
-  const login = async (userAccount: string, userPassword: string): Promise<LoginUser> => {
+  const login = async (email: string, password: string): Promise<LoginUser> => {
     isLoading.value = true
     try {
-      const response = await fetch(`${API_BASE_URL}/user/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include cookies for session
         body: JSON.stringify({
-          userAccount,
-          userPassword,
+          email,
+          password,
         }),
       })
 
@@ -61,8 +59,14 @@ export const useAuth = () => {
         throw new Error(result.message || 'Login failed')
       }
 
-      currentUser.value = result.data
-      return result.data
+      // Extract userProfile from AuthTokenResponse
+      const userProfile = result.data?.userProfile
+      if (!userProfile) {
+        throw new Error('Invalid response format: userProfile not found')
+      }
+
+      currentUser.value = userProfile
+      return userProfile
     } finally {
       isLoading.value = false
     }
@@ -74,7 +78,7 @@ export const useAuth = () => {
   const logout = async (): Promise<void> => {
     isLoading.value = true
     try {
-      await fetch(`${API_BASE_URL}/user/logout`, {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       })
