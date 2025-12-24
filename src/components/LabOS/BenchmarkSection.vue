@@ -25,10 +25,9 @@
 
         <a-col :xs="24" :sm="24" :md="12" :lg="12">
           <a-card class="content-card">
-            <a-image
+            <ImagePreview
               :src="fig2Src"
               alt="LSV Benchmark illustration"
-              :preview="previewConfig"
             />
           </a-card>
         </a-col>
@@ -39,6 +38,7 @@
 
 <script setup lang="ts">
 import { vReveal } from '@/directives/reveal'
+import ImagePreview from './ImagePreview.vue'
 import fig2Src from '@/assets/picture/New Fig2 LSV benchmark_page.jpg'
 import { useSmoothScroll } from '@/composables/useSmoothScroll'
 import { useRouter } from 'vue-router'
@@ -47,14 +47,6 @@ const router = useRouter()
 const { scrollToId } = useSmoothScroll()
 const goToSubmit = () => router.push('/submit')
 const scrollToLeaderboard = () => scrollToId('leaderboard')
-
-const previewConfig = {
-  movable: true,
-  scaleStep: 0.45,
-  minScale: 1.2,
-  maxScale: 5,
-  rootClassName: 'media-preview-root',
-}
 </script>
 
 <style scoped>

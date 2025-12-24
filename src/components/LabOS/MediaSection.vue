@@ -11,10 +11,9 @@
         <a-col :xs="24" :sm="12" :md="12">
           <a-card class="media-card">
             <div class="image-wrap">
-              <a-image
+              <ImagePreview
                 :src="fig1Src"
                 alt="Figure 1: LabOS overview with agentic dry-lab and XR wet-lab modules"
-                :preview="previewConfig"
               />
             </div>
             <div class="caption">
@@ -27,10 +26,9 @@
         <a-col :xs="24" :sm="12" :md="12">
           <a-card class="media-card">
             <div class="image-wrap">
-              <a-image
+              <ImagePreview
                 :src="fig2Src"
                 alt="Figure 2: LSV benchmark and LabOS‑VLM results"
-                :preview="previewConfig"
               />
             </div>
             <div class="caption">
@@ -43,10 +41,9 @@
         <a-col :xs="24" :sm="12" :md="12">
           <a-card class="media-card">
             <div class="image-wrap">
-              <a-image
+              <ImagePreview
                 :src="fig3Src"
                 alt="Figure 3: XR streaming and 3D/4D reconstruction for live guidance"
-                :preview="previewConfig"
               />
             </div>
             <div class="caption">
@@ -59,10 +56,9 @@
         <a-col :xs="24" :sm="12" :md="12">
           <a-card class="media-card">
             <div class="image-wrap">
-              <a-image
+              <ImagePreview
                 :src="fig4Src"
                 alt="Figure 4: Applications across NK target discovery, cell fusion mechanism, and stem cell engineering"
-                :preview="previewConfig"
               />
             </div>
             <div class="caption">
@@ -77,6 +73,25 @@
         These figures showcase the key components and applications of the LabOS system,
         from architecture to real-world biomedical experiments.
       </p>
+
+      <!-- 视频部分 -->
+      <a-row :gutter="[18, 18]" style="margin-bottom: 22px">
+        <a-col :xs="24" :sm="24" :md="24">
+          <a-card class="media-card video-card">
+            <div class="video-wrap">
+              <VideoPlayer
+                class="media-video"
+                :src="videoSrc"
+                :poster="videoPoster"
+                :cover-scale="1.7"
+              />
+            </div>
+            <div class="caption">
+              NVIDIA GTC 2025Oct JensenHuang Keynote
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
     </div>
   </section>
 </template>
@@ -85,10 +100,16 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { vReveal } from '@/directives/reveal'
+import VideoPlayer from './VideoPlayer.vue'
+import ImagePreview from './ImagePreview.vue'
 import fig1Src from '@/assets/picture/New Fig1 overview v10152025_page.jpg'
 import fig2Src from '@/assets/picture/New Fig2 LSV benchmark_page.jpg'
 import fig3Src from '@/assets/picture/New Fig3 XR-AI_page.jpg'
 import fig4Src from '@/assets/picture/New Fig4 demo v10152025_page.jpg'
+import videoPoster from '@/assets/picture/JasonHuang_first_frame.png'
+
+// 视频文件放在 public 目录，直接使用路径引用
+const videoSrc = '/videos/Media_No2_NVIDIA_GTC_2025Oct_JensenHuang_Keynote.mov'
 
 const router = useRouter()
 
@@ -97,14 +118,6 @@ onMounted(() => {
     document.getElementById('media')?.scrollIntoView({ behavior: 'smooth' })
   }
 })
-
-const previewConfig = {
-  movable: true,
-  scaleStep: 0.45,
-  minScale: 1.2,
-  maxScale: 5,
-  rootClassName: 'media-preview-root',
-}
 </script>
 
 <style scoped>
@@ -155,29 +168,6 @@ const previewConfig = {
   height: 100%;
 }
 
-.media-card :deep(.ant-image) {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.media-card :deep(.ant-image-img) {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  border-radius: 8px;
-  transition: transform 0.3s ease;
-  object-fit: contain;
-}
-
-.media-card:hover :deep(.ant-image-img) {
-  transform: scale(1.02);
-}
 
 .image-wrap {
   width: 100%;
@@ -190,6 +180,32 @@ const previewConfig = {
   justify-content: center;
 }
 
+.video-wrap {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  /* 使用标准 16:9 比例，完整显示视频 */
+  aspect-ratio: 16 / 9;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-wrap:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.video-card {
+  min-height: auto;
+}
+
+.media-video {
+  width: 100%;
+  height: 100%;
+}
+
 .caption {
   margin-top: 8px;
   color: #6b7280;
@@ -198,6 +214,8 @@ const previewConfig = {
   min-height: 80px;
   display: flex;
   align-items: center;
+  justify-content: center; /* 居中对齐 */
+  text-align: center; /* 文本居中 */
 }
 
 .note-text {
@@ -229,14 +247,5 @@ const previewConfig = {
   transform: none;
 }
 
-:deep(.media-preview-root .ant-image-preview-img) {
-  max-width: none;
-  max-height: none;
-  cursor: grab;
-}
-
-:deep(.media-preview-root .ant-image-preview-img.moving) {
-  cursor: grabbing;
-}
 </style>
 

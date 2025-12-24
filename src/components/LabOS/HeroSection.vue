@@ -28,11 +28,9 @@ import { useSmoothScroll } from '@/composables/useSmoothScroll'
 
 const { scrollToId } = useSmoothScroll()
 // Video background asset
-// Using import ensures proper bundling
-// File: src/assets/video/XR-Robotics_Background.mp4
-import videoUrl from '@/assets/video/XR-Robotics_Background.mp4'
+// Using public directory for large video files
 import heroPosterImg from '@/assets/picture/Hero_section_first_frame.png'
-const videoSrc = videoUrl
+const videoSrc = '/videos/XR-Robotics_Background.mp4'
 const heroPoster = heroPosterImg
 </script>
 

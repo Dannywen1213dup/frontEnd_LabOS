@@ -33,7 +33,8 @@
       v-model:open="isModalOpen"
       :footer="null"
       centered
-      :width="960"
+      :width="'90%'"
+      :style="{ maxWidth: '1400px' }"
       wrap-class-name="video-modal"
       @afterClose="handleModalClose"
       @cancel="handleModalCancel"
@@ -189,14 +190,36 @@ onUnmounted(() => {
 <style scoped>
 .video-wrapper { width: 100%; }
 .video-container { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 8px 28px rgba(16, 24, 40, 0.08); border: 1px solid #e5e7eb; }
-.video-element { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform 0.4s ease-out; }
+.video-element { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center center; transition: transform 0.4s ease-out; }
 .video-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: none; pointer-events: none; }
 .overlay-expand { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 999px; background: rgba(15, 23, 42, 0.6); border: none; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: background 0.2s ease; pointer-events: auto; }
 .overlay-expand:hover { background: rgba(15, 23, 42, 0.8); }
 .expand-icon { font-size: 20px; }
 /* removed play/pause overlay icon */
 
-:deep(.video-modal .ant-modal-body) { padding: 0; background: #000; }
-.modal-video { width: 100%; height: 100%; display: block; background: #000; }
+:deep(.video-modal .ant-modal-body) {
+  padding: 0;
+  background: transparent; /* 透明背景，只显示视频 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.video-modal .ant-modal-content) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.modal-video {
+  width: 100%;
+  height: auto;
+  max-height: 85vh; /* 限制最大高度，防止超出屏幕 */
+  display: block;
+  background: #000;
+  border-radius: 8px; /* 给视频加点圆角 */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  object-fit: contain; /* 保持比例，完全显示 */
+  margin: 0 auto;
+}
 </style>
 

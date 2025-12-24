@@ -3,8 +3,7 @@
     <div v-reveal class="section-content">
       <h2 class="section-title">About LabOS</h2>
       <p class="section-lead">
-        A self-evolving, multi-agent system paired with XR smart-glasses and a lab-specialized
-        VLM to co-pilot experiments with human scientists.
+        A self-evolving, multi-agent system paired with XR smart-glasses and a lab-specialized VLM to co-pilot experiments with human scientists and robotics.
       </p>
 
       <a-row :gutter="[28, 28]" align="stretch" class="about-grid">
@@ -62,18 +61,17 @@
               <VideoPlayer
                 class="media-video"
                 :src="videoSrc2"
-                :poster="posterJason"
+                :poster="posterLabDemo"
                 :cover-scale="1.4"
               />
-              <p class="media-caption">NVIDIA GTC 2025Oct JensenHuang Keynote</p>
+              <p class="media-caption">LabOS: The Future of Agentic Lab Automation </p>
             </div>
           </div>
           <div class="media-bottom">
-            <a-image
+            <ImagePreview
               class="media-image"
               :src="introFigure"
               alt="Intro Figure"
-              :preview="previewConfig"
             />
             <p class="media-caption"> LabOS overview</p>
           </div>
@@ -86,21 +84,15 @@
 <script setup lang="ts">
 import { vReveal } from '@/directives/reveal'
 import VideoPlayer from './VideoPlayer.vue'
+import ImagePreview from './ImagePreview.vue'
 import posterIntro from '@/assets/picture/Intro_labOS_first_frame.png'
-import posterJason from '@/assets/picture/JasonHuang_first_frame.png'
+import posterLabDemo from '@/assets/picture/Media_No3_Lab_Demo_Cover.png'
 import introFigure from '@/assets/picture/intro_labOS_f1.png'
 
 // 视频文件放在 public 目录，直接使用路径引用
 const videoSrc1 = '/videos/Media_No1_LabOS_System_Intro.mov'
-const videoSrc2 = '/videos/Media_No2_NVIDIA_GTC_2025Oct_JensenHuang_Keynote.mov'
+const videoSrc2 = '/videos/Media_No3_LabOS_Demo_Video.mp4'
 
-const previewConfig = {
-  movable: true,
-  scaleStep: 0.45,
-  minScale: 1.2,
-  maxScale: 5,
-  rootClassName: 'media-preview-root',
-}
 </script>
 
 <style scoped>
@@ -180,7 +172,6 @@ const previewConfig = {
 }
 .media-caption { margin: 0; font-size: 13px; color: #6b7280; text-align: center; }
 .media-image {
-  display: block;
   width: 100%;
   height: 100%;
   border-radius: 12px;
@@ -192,6 +183,7 @@ const previewConfig = {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  cursor: pointer;
 }
 
 /* 滚动动画 */
