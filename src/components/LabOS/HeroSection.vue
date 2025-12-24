@@ -1,5 +1,5 @@
 <template>
-  <section class="hero">
+  <section id="overview" class="hero">
     <video
       class="hero-video"
       autoplay

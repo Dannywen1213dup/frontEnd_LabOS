@@ -6,44 +6,34 @@
         <span class="brand-text">LabOS</span>
       </div>
       <nav class="nav-menu">
-        <button type="button" class="nav-link" @click="scrollToId('about')">About</button>
-        <button type="button" class="nav-link" @click="scrollToId('use')">Use LabOS Now</button>
-        <button type="button" class="nav-link" @click="scrollToId('benchmark')">Benchmark</button>
-        <button type="button" class="nav-link" @click="scrollToId('leaderboard')">Leaderboard</button>
-        <button type="button" class="nav-link" @click="scrollToId('media')">Media</button>
-        <button type="button" class="nav-link" @click="scrollToId('team')">Team</button>
-        <a
-          class="paper-link"
-          href="https://arxiv.org/abs/2510.14861"
-          target="_blank"
-          rel="noopener"
-        >
-          Paper ↗
-        </a>
-        <div class="auth-section">
-          <a-button
-            v-if="!isLoggedIn"
-            type="primary"
-            size="small"
-            class="login-btn"
-            @click="showLoginModal = true"
-          >
+      <div class="auth-section">
+        <div v-if="!isLoggedIn" class="auth-buttons">
+          <button class="auth-btn login-btn" @click="handleShowAuth('login')">
             Login
-          </a-button>
-          <div v-else class="user-section">
-            <span class="user-name">{{ currentUser?.userName || 'User' }}</span>
-            <a-button
-              type="text"
-              size="small"
-              class="logout-btn"
-              @click="handleLogout"
-            >
-              Sign Out
-            </a-button>
-          </div>
+          </button>
+          <button class="auth-btn register-btn" @click="handleShowAuth('register')">
+            Register
+          </button>
         </div>
-      </nav>
-      <LoginModal :open="showLoginModal" @update:open="showLoginModal = $event" @success="handleLoginSuccess" />
+        <div v-else class="user-section">
+          <span class="user-name">{{ currentUser?.userName || 'User' }}</span>
+          <a-button
+            type="text"
+            size="small"
+            class="logout-btn"
+            @click="handleLogout"
+          >
+            Sign Out
+          </a-button>
+        </div>
+      </div>
+    </nav>
+      <AuthModal 
+        :open="showAuthModal" 
+        :initial-tab="initialTab"
+        @update:open="showAuthModal = $event" 
+        @success="handleLoginSuccess" 
+      />
     </div>
   </a-layout-header>
 </template>
@@ -52,13 +42,17 @@
 import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import logoSrc from '@/assets/picture/LabOS_logo.jpg'
-import { useSmoothScroll } from '@/composables/useSmoothScroll'
 import { useAuth } from '@/composables/useAuth'
-import LoginModal from './LoginModal.vue'
+import AuthModal from './AuthModal.vue'
 
-const { scrollToId } = useSmoothScroll()
 const { isLoggedIn, currentUser, logout, checkLoginStatus } = useAuth()
-const showLoginModal = ref(false)
+const showAuthModal = ref(false)
+const initialTab = ref<'login' | 'register'>('login')
+
+const handleShowAuth = (tab: 'login' | 'register') => {
+  initialTab.value = tab
+  showAuthModal.value = true
+}
 
 const handleLoginSuccess = () => {
   checkLoginStatus()
@@ -125,36 +119,6 @@ onMounted(() => {
   gap: 22px;
 }
 
-.nav-link {
-  color: #475569; /* 中灰色文字 */
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.nav-link:hover {
-  color: #111827; /* 悬停时深色 */
-}
-
-.paper-link {
-  color: #4f46e5; /* 紫色文字 */
-  text-decoration: none;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  white-space: nowrap;
-}
-.paper-link:hover {
-  background: #eef2ff;
-  color: #4338ca; /* 悬停时深紫色 */
-}
-
 .auth-section {
   display: flex;
   align-items: center;
@@ -162,8 +126,52 @@ onMounted(() => {
   margin-left: 8px;
 }
 
-.login-btn {
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.auth-btn {
+  padding: 3px 13.6px;
+  font-size: 13px;
   font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  box-sizing: border-box;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-btn {
+  color: #6b7280;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+}
+
+.login-btn:hover {
+  color: #4f46e5;
+  background: #f3f4f6;
+}
+
+.register-btn {
+  color: #ffffff;
+  background: #4f46e5;
+  border: 1px solid #4f46e5;
+  box-shadow: 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+}
+
+.register-btn:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 }
 
 .user-section {
@@ -214,18 +222,6 @@ onMounted(() => {
     margin-top: 4px;
   }
 
-  .nav-link {
-    font-size: 11px;
-    padding: 3px 6px;
-    line-height: 1.2;
-  }
-  
-  .paper-link {
-    font-size: 11px;
-    padding: 3px 6px;
-    line-height: 1.2;
-  }
-  
   .brand-text {
     font-size: 12px;
   }
@@ -242,16 +238,6 @@ onMounted(() => {
   
   .nav-menu {
     gap: 3px;
-  }
-  
-  .nav-link {
-    font-size: 10px;
-    padding: 2px 4px;
-  }
-  
-  .paper-link {
-    font-size: 10px;
-    padding: 2px 4px;
   }
   
   .brand-text {

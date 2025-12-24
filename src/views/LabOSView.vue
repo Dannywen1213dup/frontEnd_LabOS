@@ -1,6 +1,7 @@
 <template>
   <div class="labos-page">
     <HeaderNav />
+    <SidebarNav />
     <HeroSection />
     <AboutSection />
     <UseLabOSSection />
@@ -15,6 +16,7 @@
 
 <script setup lang="ts">
 import HeaderNav from '@/components/LabOS/HeaderNav.vue'
+import SidebarNav from '@/components/LabOS/SidebarNav.vue'
 import HeroSection from '@/components/LabOS/HeroSection.vue'
 import AboutSection from '@/components/LabOS/AboutSection.vue'
 import UseLabOSSection from '@/components/LabOS/UseLabOSSection.vue'
