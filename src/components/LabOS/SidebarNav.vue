@@ -11,8 +11,11 @@
         <div class="nav-indicator"></div>
         <span class="nav-label">{{ item.label }}</span>
       </div>
+      <Transition name="fade-slide">
       <a
+          v-show="showPaperLink"
           class="nav-item paper-link"
+          :class="{ active: activeId === 'paper' }"
           href="https://arxiv.org/abs/2510.14861"
           target="_blank"
           rel="noopener"
@@ -20,6 +23,7 @@
         <div class="nav-indicator"></div>
         <span class="nav-label">Paper ↗</span>
       </a>
+      </Transition>
     </div>
   </nav>
 </template>
@@ -30,6 +34,7 @@ import { useSmoothScroll } from '@/composables/useSmoothScroll'
 
 const { scrollToId } = useSmoothScroll()
 const activeId = ref('')
+const showPaperLink = ref(false)
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
@@ -42,59 +47,87 @@ const navItems = [
 ]
 
 let observer: IntersectionObserver | null = null
+let footerObserver: IntersectionObserver | null = null
 
   onMounted(() => {
-    // Scroll listener for top "Overview" vs "About" logic
+    // Main scroll handler for active section detection
     const handleScroll = () => {
       const scrollY = window.scrollY
+      const viewportHeight = window.innerHeight
+      const viewportMiddle = scrollY + viewportHeight / 2
+      
+      // Handle top "Overview" vs "About" logic
       if (scrollY <= 10) {
         activeId.value = 'overview'
-      } else if (activeId.value === 'overview') {
-        // If we just scrolled past 10px and were in overview, switch to about
-        activeId.value = 'about'
+        return
       }
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    
-    // Initial check
-    handleScroll()
-
-    // Setup intersection observer for other sections
-    observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          // If we are observing an intersection, update activeId
-          // Unless we are at the very top (<=10px), where 'overview' forces priority
-          if (window.scrollY > 10) {
-             activeId.value = entry.target.id
-          }
+      
+      // Check footer first for Paper link
+      const footerEl = document.getElementById('footer')
+      if (footerEl) {
+        const footerRect = footerEl.getBoundingClientRect()
+        const footerVisible = footerRect.top < viewportHeight && footerRect.bottom > 0
+        const footerVisibleRatio = footerVisible 
+          ? Math.min((viewportHeight - footerRect.top) / viewportHeight, 1) 
+          : 0
+        
+        showPaperLink.value = footerVisibleRatio >= 0.1
+        
+        // Switch to Paper when footer occupies 20% or more
+        if (footerVisibleRatio >= 0.2) {
+          activeId.value = 'paper'
+          return
+        }
+      }
+      
+      // Find which section's content is near the middle of viewport
+      let closestSection = 'about'
+      let closestDistance = Infinity
+      
+      navItems.forEach((item) => {
+        const el = document.getElementById(item.id)
+        if (!el) return
+        
+        const rect = el.getBoundingClientRect()
+        const elementTop = scrollY + rect.top
+        const elementBottom = scrollY + rect.bottom
+        
+        // Check if viewport middle is within this section
+        if (viewportMiddle >= elementTop && viewportMiddle <= elementBottom) {
+          closestSection = item.id
+          closestDistance = 0
+          return
+        }
+        
+        // Calculate distance from viewport middle to section
+        const distanceToTop = Math.abs(viewportMiddle - elementTop)
+        const distanceToBottom = Math.abs(viewportMiddle - elementBottom)
+        const distance = Math.min(distanceToTop, distanceToBottom)
+        
+        if (distance < closestDistance) {
+          closestDistance = distance
+          closestSection = item.id
         }
       })
-    }, {
-      root: null,
-      rootMargin: '-40% 0px -40% 0px', // Active when element is in the middle of viewport
-      threshold: 0
-    })
-
-    navItems.forEach((item) => {
-      // Don't observe 'overview' with IntersectionObserver, handled by scroll
-      if (item.id === 'overview') return 
       
-      const el = document.getElementById(item.id)
-      if (el) observer?.observe(el)
-    })
+      activeId.value = closestSection
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('resize', handleScroll, { passive: true })
+    
+    // Initial check
+    setTimeout(handleScroll, 100)
 
     // Store cleanup for unmount
     ;(window as any)._labosScrollHandler = handleScroll
   })
 
   onUnmounted(() => {
-    if (observer) {
-      observer.disconnect()
-    }
     const handler = (window as any)._labosScrollHandler
     if (handler) {
       window.removeEventListener('scroll', handler)
+      window.removeEventListener('resize', handler)
     }
   })
 </script>
@@ -203,6 +236,17 @@ let observer: IntersectionObserver | null = null
   .sidebar-nav {
     display: none;
   }
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
 

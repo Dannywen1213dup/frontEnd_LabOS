@@ -7,12 +7,73 @@ export interface LoginUser {
   userAvatar: string
   userProfile: string
   userRole: string
+  email: string
   createTime: string
   updateTime: string
 }
 
+interface AuthTokenPayload {
+  tokenName: string
+  tokenValue: string
+}
+
+const TOKEN_STORAGE_KEY = 'labos_satoken'
+
+const readStoredToken = (): AuthTokenPayload | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+  try {
+    const raw = window.localStorage.getItem(TOKEN_STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as AuthTokenPayload) : null
+  } catch {
+    return null
+  }
+}
+
+const persistToken = (token: AuthTokenPayload | null) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  if (token) {
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(token))
+  } else {
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY)
+  }
+}
+
 const currentUser = ref<LoginUser | null>(null)
 const isLoading = ref(false)
+const authToken = ref<AuthTokenPayload | null>(readStoredToken())
+
+const setAuthToken = (token: AuthTokenPayload | null) => {
+  authToken.value = token
+  persistToken(token)
+}
+
+const getTokenValue = () => authToken.value?.tokenValue
+
+const fetchUserInfoByToken = async (tokenValue: string): Promise<LoginUser> => {
+  const response = await fetch(`${API_BASE_URL}/auth/user-info`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      satoken: tokenValue,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch user info')
+  }
+
+  const result = await response.json()
+  if (result.code !== 0 || !result.data) {
+    throw new Error(result.message || 'Failed to fetch user info')
+  }
+
+  currentUser.value = result.data
+  return result.data
+}
 
 export const useAuth = () => {
   /**
@@ -65,8 +126,22 @@ export const useAuth = () => {
         throw new Error('Invalid response format: userProfile not found')
       }
 
+      const tokenValue = result.data?.tokenValue
+      const tokenName = result.data?.tokenName || 'satoken'
+      if (!tokenValue) {
+        throw new Error('Token not found in response')
+      }
+
+      setAuthToken({ tokenName, tokenValue })
       currentUser.value = userProfile
+
+      try {
+        const latestProfile = await fetchUserInfoByToken(tokenValue)
+        return latestProfile
+      } catch (infoError) {
+        console.warn('Failed to refresh user info after login', infoError)
       return userProfile
+      }
     } finally {
       isLoading.value = false
     }
@@ -78,19 +153,30 @@ export const useAuth = () => {
   const logout = async (): Promise<void> => {
     isLoading.value = true
     try {
+      const headers: Record<string, string> = {}
+      const tokenValue = getTokenValue()
+      if (tokenValue) {
+        headers.satoken = tokenValue
+      }
       await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers,
       })
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
       currentUser.value = null
       isLoading.value = false
+      setAuthToken(null)
       // Clear any cookies
+      if (typeof document !== 'undefined') {
       document.cookie.split(';').forEach((c) => {
-        document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
+          document.cookie = c
+            .replace(/^ +/, '')
+            .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
       })
+      }
     }
   }
 
@@ -98,24 +184,17 @@ export const useAuth = () => {
    * Check current login status
    */
   const checkLoginStatus = async (): Promise<void> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/user/get/login`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        if (result.code === 0 && result.data) {
-          currentUser.value = result.data
-        } else {
+    const tokenValue = getTokenValue()
+    if (!tokenValue) {
           currentUser.value = null
-        }
-      } else {
-        currentUser.value = null
-      }
+      return
+    }
+
+    try {
+      await fetchUserInfoByToken(tokenValue)
     } catch (error) {
       console.error('Check login status error:', error)
+      setAuthToken(null)
       currentUser.value = null
     }
   }
@@ -128,6 +207,7 @@ export const useAuth = () => {
     login,
     logout,
     checkLoginStatus,
+    getTokenValue,
   }
 }
 

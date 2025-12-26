@@ -1,5 +1,5 @@
 <template>
-  <a-layout-footer class="labos-footer">
+  <a-layout-footer id="footer" class="labos-footer">
     <div class="footer-content">
       <a-row :gutter="[28, 28]">
         <a-col :xs="24" :md="12">

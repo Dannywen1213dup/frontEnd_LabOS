@@ -34,6 +34,7 @@
             :multiple="true"
             :before-upload="handleBeforeUpload"
             :file-list="fileList"
+            :show-upload-list="false"
             @remove="onRemove"
           >
             <p class="ant-upload-drag-icon">
@@ -43,12 +44,23 @@
             <p class="ant-upload-hint">OR</p>
             <a-button>Choose files</a-button>
           </a-upload-dragger>
-          <div v-if="uploading" class="upload-progress">
+          <div v-if="fileList.length > 0" class="upload-progress">
             <div v-for="file in fileList" :key="file.uid" class="file-progress-item">
-              <div class="file-name">{{ file.name }}</div>
+              <div class="file-row">
+                <div class="file-name">{{ file.name }}</div>
+                <button
+                  v-if="!uploading"
+                  type="button"
+                  class="file-remove"
+                  aria-label="Remove file"
+                  @click="onRemove(file)"
+                >
+                  <CloseOutlined />
+                </button>
+              </div>
               <a-progress 
-                :percent="file.uploadProgress || 0" 
-                :status="file.status === 'error' ? 'exception' : file.status === 'success' ? 'success' : 'active'"
+                :percent="file.uploadProgress ?? 0" 
+                :status="file.status === 'error' ? 'exception' : (file.status === 'success' || file.status === 'done') ? 'success' : (uploading ? 'active' : 'normal')"
                 :show-info="true"
               />
             </div>
@@ -56,10 +68,9 @@
         </div>
 
         <div class="actions">
-          <a-space>
-            <a-button @click="onReset">Reset</a-button>
-            <a-button type="primary" @click="onSubmit" :loading="submitting">Submit</a-button>
-          </a-space>
+          <a-button type="primary" @click="onSubmit" :loading="submitting" :disabled="fileList.length === 0">
+            Submit
+          </a-button>
         </div>
       </a-card>
     </div>
@@ -69,8 +80,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
-import { UploadOutlined } from '@ant-design/icons-vue'
+import { UploadOutlined, CloseOutlined } from '@ant-design/icons-vue'
 import { API_BASE_URL } from '@/composables/useApiConfig'
+import { useAuth } from '@/composables/useAuth'
 
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ (e: 'update:open', v: boolean): void }>()
@@ -83,6 +95,8 @@ type UploadFileItem = {
   url?: string
   uploadProgress?: number
 }
+
+const { getTokenValue, checkLoginStatus } = useAuth()
 
 const fileList = ref<UploadFileItem[]>([])
 const submitting = ref(false)
@@ -111,11 +125,18 @@ const onRemove = (file: UploadFileItem) => {
 /**
  * Fetch batch presigned URLs from backend
  */
-const fetchBatchPresignedUrls = async (fileNames: string[]): Promise<Array<{ fileName: string; sanitizedFileName: string; presignedUrl: string }>> => {
+const fetchBatchPresignedUrls = async (
+  fileNames: string[],
+  tokenValue: string
+): Promise<{ 
+  batchId: string; 
+  entries: Array<{ fileName: string; sanitizedFileName: string; presignedUrl: string }> 
+}> => {
   const response = await fetch(`${API_BASE_URL}/s3/folder/presigned-upload-url/benchmark-eval/batch`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      satoken: tokenValue,
     },
     credentials: 'include', // Include cookies for authentication
     body: JSON.stringify({
@@ -140,7 +161,10 @@ const fetchBatchPresignedUrls = async (fileNames: string[]): Promise<Array<{ fil
     throw new Error(result.message || 'Failed to get presigned URLs')
   }
 
-  return result.data.entries || []
+  return {
+    batchId: result.data.batchId,
+    entries: result.data.entries || []
+  }
 }
 
 /**
@@ -150,7 +174,7 @@ const uploadFileToS3 = async (
   file: File, 
   presignedUrl: string, 
   onProgress: (progress: number) => void
-): Promise<void> => {
+): Promise<{ status: number; success: boolean }> => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
 
@@ -164,7 +188,7 @@ const uploadFileToS3 = async (
     xhr.addEventListener('load', () => {
       if (xhr.status === 200) {
         onProgress(100)
-        resolve()
+        resolve({ status: xhr.status, success: true })
       } else {
         reject(new Error(`Upload failed with status ${xhr.status}`))
       }
@@ -182,6 +206,94 @@ const uploadFileToS3 = async (
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
     xhr.send(file)
   })
+}
+
+const requireAuthToken = async (): Promise<string> => {
+  let tokenValue = getTokenValue()
+  if (tokenValue) {
+    return tokenValue
+  }
+
+  await checkLoginStatus()
+  tokenValue = getTokenValue()
+
+  if (!tokenValue) {
+    throw new Error('Please login to upload files')
+  }
+
+  return tokenValue
+}
+
+/**
+ * Report successful upload to backend tracking system
+ */
+const reportUploadSuccess = async (
+  batchId: string,
+  sanitizedFileName: string,
+  fileSize: number,
+  tokenValue: string
+): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/upload-tracking/update-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        satoken: tokenValue,
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        batchId,
+        sanitizedFileName,
+        uploadStatus: 'SUCCESS',
+        fileSize,
+        httpStatusCode: 200
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`Failed to report success for ${sanitizedFileName}:`, errorText)
+    }
+  } catch (error) {
+    console.error(`Error reporting success for ${sanitizedFileName}:`, error)
+  }
+}
+
+/**
+ * Report failed upload to backend tracking system
+ */
+const reportUploadFailure = async (
+  batchId: string,
+  sanitizedFileName: string,
+  errorMessage: string,
+  httpStatusCode: number | undefined,
+  tokenValue: string
+): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/upload-tracking/update-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        satoken: tokenValue,
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        batchId,
+        sanitizedFileName,
+        uploadStatus: 'FAILED',
+        errorMessage,
+        errorCode: 'UPLOAD_ERROR',
+        httpStatusCode: httpStatusCode || 500
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`Failed to report failure for ${sanitizedFileName}:`, errorText)
+    }
+  } catch (error) {
+    console.error(`Error reporting failure for ${sanitizedFileName}:`, error)
+  }
 }
 
 const onSubmit = async () => {
@@ -207,16 +319,21 @@ const onSubmit = async () => {
       file.uploadProgress = 0
     })
 
+    // Ensure user is authenticated
+    const tokenValue = await requireAuthToken()
+
     // Step 1: Get batch presigned URLs
     const fileNames = filesToUpload.map(item => item.name)
-    message.loading('Getting upload URLs...', 0)
     
-    const presignedUrls = await fetchBatchPresignedUrls(fileNames)
-    message.destroy()
+    const batchResponse = await fetchBatchPresignedUrls(fileNames, tokenValue)
+    const batchId = batchResponse.batchId
+    const presignedUrls = batchResponse.entries
 
     if (presignedUrls.length !== filesToUpload.length) {
       throw new Error('Mismatch between requested and received presigned URLs')
     }
+
+    console.log(`Starting batch upload with batchId: ${batchId}`)
 
     // Create a map of file name to presigned URL entry
     const urlMap = new Map<string, typeof presignedUrls[0]>()
@@ -224,8 +341,7 @@ const onSubmit = async () => {
       urlMap.set(entry.fileName, entry)
     })
 
-    // Step 2: Upload each file
-    message.loading('Uploading files...', 0)
+    // Step 2: Upload each file and report status
     
     const uploadPromises = filesToUpload.map(async (fileItem) => {
       const presignedUrlEntry = urlMap.get(fileItem.name)
@@ -234,35 +350,57 @@ const onSubmit = async () => {
       }
 
       try {
-        await uploadFileToS3(
+        // Upload to S3
+        const uploadResult = await uploadFileToS3(
           fileItem.file!,
           presignedUrlEntry.presignedUrl,
           (progress) => {
             fileItem.uploadProgress = progress
           }
         )
+        
         fileItem.status = 'success'
-      } catch (error) {
+        
+        // Report success to backend tracking system
+        await reportUploadSuccess(
+          batchId,
+          presignedUrlEntry.sanitizedFileName,
+          fileItem.file!.size,
+          tokenValue
+        )
+      } catch (error: any) {
         fileItem.status = 'error'
+        
+        // Report failure to backend tracking system
+        const errorMessage = error.message || 'Unknown upload error'
+        const httpStatusCode = error.status || undefined
+        
+        await reportUploadFailure(
+          batchId,
+          presignedUrlEntry.sanitizedFileName,
+          errorMessage,
+          httpStatusCode,
+          tokenValue
+        )
+        
         throw error
       }
     })
 
     await Promise.allSettled(uploadPromises)
-    message.destroy()
 
     // Check if all uploads succeeded
     const failedUploads = fileList.value.filter(f => f.status === 'error')
     if (failedUploads.length > 0) {
       message.error(`${failedUploads.length} file(s) failed to upload`)
+      // Keep files in the list for retry
     } else {
       message.success('All files uploaded successfully!')
-      // Optionally close the modal after successful upload
-      // emit('update:open', false)
+      // Keep uploaded files in the list.
+      // The list will reset only when user closes the modal (destroy-on-close).
     }
 
   } catch (e: any) {
-    message.destroy()
     // Provide more detailed error messages
     let errorMessage = 'Failed to upload files'
     if (e.message) {
@@ -282,8 +420,6 @@ const onSubmit = async () => {
     uploading.value = false
   }
 }
-
-const onReset = () => { fileList.value = [] }
 </script>
 
 <style scoped>
@@ -314,11 +450,39 @@ const onReset = () => { fileList.value = [] }
 .file-progress-item:last-child {
   margin-bottom: 0;
 }
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
 .file-name {
   font-size: 14px;
   color: #374151;
-  margin-bottom: 4px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.file-remove:hover {
+  border-color: #d1d5db;
+  color: #374151;
+  background: #f9fafb;
 }
 .actions { display:flex; justify-content:flex-end; margin-top:16px }
 </style>

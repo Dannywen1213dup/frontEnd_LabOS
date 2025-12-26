@@ -61,7 +61,7 @@
           </a-form-item>
 
           <div class="form-footer">
-            <a class="forgot-link" @click="showForgotPassword = true">Forgot password?</a>
+            <a class="forgot-link" @click="handleForgotPassword">Forgot password?</a>
           </div>
 
           <a-button
@@ -222,118 +222,15 @@
         </div>
       </div>
     </div>
-
-    <!-- Forgot Password Modal -->
-    <a-modal
-      v-model:open="showForgotPassword"
-      title="Reset Password"
-      :footer="null"
-      :width="400"
-    >
-      <div v-if="forgotStep === 1">
-        <a-form :model="forgotEmailForm" layout="vertical" @finish="handleSendResetCode">
-          <a-form-item
-            label="Email"
-            name="email"
-            :rules="[
-              { required: true, message: 'Please enter your email' },
-              { type: 'email', message: 'Please enter a valid email' }
-            ]"
-          >
-            <a-input
-              v-model:value="forgotEmailForm.email"
-              placeholder="your@email.com"
-              size="large"
-            />
-          </a-form-item>
-
-          <a-button
-            type="primary"
-            html-type="submit"
-            size="large"
-            block
-            :loading="loading"
-          >
-            Send Reset Code
-          </a-button>
-        </a-form>
-      </div>
-
-      <div v-if="forgotStep === 2">
-        <a-form :model="resetForm" layout="vertical" @finish="handleResetPassword">
-          <a-form-item
-            label="Reset Code"
-            name="token"
-            :rules="[
-              { required: true, message: 'Please enter reset code' },
-              { pattern: /^\d{6}$/, message: 'Code must be 6 digits' }
-            ]"
-          >
-            <a-input
-              v-model:value="resetForm.token"
-              placeholder="Enter 6-digit code"
-              size="large"
-              maxlength="6"
-            />
-          </a-form-item>
-
-          <a-form-item
-            label="New Password"
-            name="newPassword"
-            :rules="[
-              { required: true, message: 'Please enter new password' },
-              { min: 8, message: 'Password must be at least 8 characters' }
-            ]"
-          >
-            <a-input-password
-              v-model:value="resetForm.newPassword"
-              placeholder="At least 8 characters"
-              size="large"
-            />
-          </a-form-item>
-
-          <a-form-item
-            label="Confirm Password"
-            name="confirmPassword"
-            :rules="[
-              { required: true, message: 'Please confirm password' },
-              { validator: validateResetPasswordMatch }
-            ]"
-          >
-            <a-input-password
-              v-model:value="resetForm.confirmPassword"
-              placeholder="Re-enter password"
-              size="large"
-            />
-          </a-form-item>
-
-          <a-space direction="vertical" :size="12" style="width: 100%">
-            <a-button
-              type="primary"
-              html-type="submit"
-              size="large"
-              block
-              :loading="loading"
-            >
-              Reset Password
-            </a-button>
-            <a-button
-              size="large"
-              block
-              @click="forgotStep = 1"
-            >
-              Back
-            </a-button>
-          </a-space>
-        </a-form>
-      </div>
-    </a-modal>
   </a-modal>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { useAuth } from '@/composables/useAuth'
+import { API_BASE_URL } from '@/composables/useApiConfig'
 
 const props = defineProps<{ 
   open: boolean
@@ -344,10 +241,10 @@ const emit = defineEmits<{
   (e: 'success'): void 
 }>()
 
+const router = useRouter()
+const { login } = useAuth()
 const activeTab = ref<'login' | 'register'>(props.initialTab || 'login')
 const registerStep = ref(1) // 1: send code, 2: complete registration
-const forgotStep = ref(1) // 1: send code, 2: reset password
-const showForgotPassword = ref(false)
 const loading = ref(false)
 
 // Login Form
@@ -371,16 +268,6 @@ const registerForm = reactive({
   legalAccepted: false
 })
 
-// Forgot Password Forms
-const forgotEmailForm = reactive({
-  email: ''
-})
-
-const resetForm = reactive({
-  token: '',
-  newPassword: '',
-  confirmPassword: ''
-})
 
 // Validators
 const validatePasswordMatch = async (_rule: any, value: string) => {
@@ -390,12 +277,6 @@ const validatePasswordMatch = async (_rule: any, value: string) => {
   return Promise.resolve()
 }
 
-const validateResetPasswordMatch = async (_rule: any, value: string) => {
-  if (value && value !== resetForm.newPassword) {
-    return Promise.reject('Passwords do not match')
-  }
-  return Promise.resolve()
-}
 
 const validateLegalAccepted = async (_rule: any, value: boolean) => {
   if (!registerForm.legalAccepted) {
@@ -408,39 +289,63 @@ const validateLegalAccepted = async (_rule: any, value: boolean) => {
 const handleLogin = async () => {
   loading.value = true
   try {
-    // TODO: Implement API call to /api/auth/login
-    console.log('Login:', loginForm)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+    await login(loginForm.email, loginForm.password)
     message.success('Login successful!')
     emit('update:open', false)
     emit('success')
     resetForms()
-  } catch (error: any) {
-    message.error(error?.message || 'Login failed')
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Login failed'
+    message.error(errorMessage)
   } finally {
     loading.value = false
   }
 }
 
 const handleSendCode = async () => {
+  if (!emailForm.email) {
+    message.error('Please enter your email first')
+    return
+  }
   loading.value = true
   try {
-    // TODO: Implement API call to /api/auth/send-code
-    console.log('Send code to:', emailForm.email)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+    const response = await fetch(`${API_BASE_URL}/auth/send-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: emailForm.email,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to send verification code')
+    }
+
+    const result = await response.json()
+    if (result.code !== 0) {
+      throw new Error(result.message || 'Failed to send verification code')
+    }
+
     message.success('Verification code sent! Please check your email.')
     registerStep.value = 2
-  } catch (error: any) {
-    message.error(error?.message || 'Failed to send verification code')
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send verification code'
+    message.error(errorMessage)
   } finally {
     loading.value = false
   }
 }
 
 const handleRegister = async () => {
+  if (!emailForm.email) {
+    message.error('Please enter your email')
+    return
+  }
+
   loading.value = true
   try {
-    // TODO: Implement API call to /api/auth/register
     const payload = {
       email: emailForm.email,
       password: registerForm.password,
@@ -450,61 +355,46 @@ const handleRegister = async () => {
       lastName: registerForm.lastName,
       legalAccepted: registerForm.legalAccepted
     }
-    console.log('Register:', payload)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-    message.success('Registration successful!')
-    emit('update:open', false)
-    emit('success')
-    resetForms()
-  } catch (error: any) {
-    message.error(error?.message || 'Registration failed')
-  } finally {
-    loading.value = false
-  }
-}
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
 
-const handleSendResetCode = async () => {
-  loading.value = true
-  try {
-    // TODO: Implement API call to /api/auth/forgot-password/send-code
-    console.log('Send reset code to:', forgotEmailForm.email)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-    message.success('If the account exists, we have sent a password reset email.')
-    forgotStep.value = 2
-  } catch (error: any) {
-    message.error(error?.message || 'Failed to send reset code')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleResetPassword = async () => {
-  loading.value = true
-  try {
-    // TODO: Implement API call to /api/auth/forgot-password/reset
-    const payload = {
-      email: forgotEmailForm.email,
-      token: resetForm.token,
-      newPassword: resetForm.newPassword,
-      confirmPassword: resetForm.confirmPassword
+    if (!response.ok) {
+      throw new Error('Registration failed')
     }
-    console.log('Reset password:', payload)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-    message.success('Password reset successful! Please login with your new password.')
-    showForgotPassword.value = false
-    forgotStep.value = 1
-    activeTab.value = 'login'
+
+    const result = await response.json()
+    if (result.code !== 0) {
+      throw new Error(result.message || 'Registration failed')
+    }
+
+    const registeredEmail = emailForm.email
+    message.success('Registration successful! Please login with your new account.')
     resetForms()
-  } catch (error: any) {
-    message.error(error?.message || 'Failed to reset password')
+    loginForm.email = registeredEmail
+    activeTab.value = 'login'
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Registration failed'
+    message.error(errorMessage)
   } finally {
     loading.value = false
   }
 }
+
 
 const handleCancel = () => {
   emit('update:open', false)
   resetForms()
+}
+
+const handleForgotPassword = () => {
+  emit('update:open', false)
+  const baseUrl = window.location.origin
+  window.open(`${baseUrl}/forgot-password`, '_blank')
 }
 
 const resetForms = () => {
@@ -517,12 +407,7 @@ const resetForms = () => {
   registerForm.password = ''
   registerForm.confirmPassword = ''
   registerForm.legalAccepted = false
-  forgotEmailForm.email = ''
-  resetForm.token = ''
-  resetForm.newPassword = ''
-  resetForm.confirmPassword = ''
   registerStep.value = 1
-  forgotStep.value = 1
 }
 
 // Reset forms when modal closes

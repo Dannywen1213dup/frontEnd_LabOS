@@ -6,6 +6,12 @@ module.exports = defineConfig({
     client: {
       overlay: false
     },
-    historyApiFallback: true
+    historyApiFallback: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8101',
+        changeOrigin: true
+      }
+    }
   }
 })

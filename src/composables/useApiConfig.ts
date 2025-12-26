@@ -1,18 +1,22 @@
 /**
  * Shared API configuration utility
- * Uses relative path /api which is routed by nginx to the backend
+ * API base URL configuration
+ *
+ * NOTE:
+ * - If your backend is hosted under https://ai4labos.com/api, set base URL to that.
+ * - All frontend API calls should be built as `${API_BASE_URL}/...`
  */
 
 /**
  * Get the API base URL
- * Uses relative path since nginx routes /api to the backend
  */
 export const getApiBaseUrl = (): string => {
-  return '/api'
+  return 'https://ai4labos.com/api'
 }
 
 /**
- * API base URL - relative path routed by nginx
+ * API base URL
  */
-export const API_BASE_URL = '/api'
+export const API_BASE_URL = 'https://ai4labos.com/api'
+
 

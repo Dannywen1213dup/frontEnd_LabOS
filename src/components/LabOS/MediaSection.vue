@@ -122,7 +122,7 @@ onMounted(() => {
 
 <style scoped>
 .section-container {
-  padding: 72px 0;
+  padding: 48px 0;
   background: #f7f9ff;
 }
 
@@ -156,7 +156,7 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 8px 28px rgba(16, 24, 40, 0.08);
   height: 100%;
-  min-height: 430px;
+  min-height: 320px;
   display: flex;
   flex-direction: column;
 }
